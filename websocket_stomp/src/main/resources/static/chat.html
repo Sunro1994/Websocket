@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat Application</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+        .chat-container {
+            width: 100%;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        .chat-messages {
+            border: 1px solid #ccc;
+            height: 300px;
+            overflow-y: scroll;
+            padding: 10px;
+            margin-bottom: 10px;
+        }
+        .chat-input {
+            display: flex;
+        }
+        .chat-input input, .chat-input button {
+            padding: 10px;
+            font-size: 16px;
+        }
+        .chat-input input {
+            flex: 1;
+            margin-right: 10px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="chat-container">
+    <h2>Chat Room</h2>
+    <div>
+        <label for="username">Username:</label>
+        <input type="text" id="username">
+    </div>
+    <div>
+        <label for="roomId">Room ID:</label>
+        <input type="text" id="roomId">
+    </div>
+    <div class="chat-messages" id="chatMessages"></div>
+    <div class="chat-input">
+        <input type="text" id="message" placeholder="Type your message...">
+        <button onclick="sendMessage()">Send</button>
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.5.0/sockjs.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+<script>
+    let stompClient = null;
+    let roomId = null;
+
+    function connect() {
+        const socket = new SockJS('/ws');
+        stompClient = Stomp.over(socket);
+        stompClient.connect({}, onConnected, onError);
+    }
+
+    function onConnected() {
+        roomId = document.getElementById('roomId').value.trim();
+        if (roomId) {
+            stompClient.subscribe('/sub/chat/room/' + roomId, onMessageReceived);
+
+            const username = document.getElementById('username').value.trim();
+            if (username) {
+                const joinMessage = {
+                    sender: username,
+                    type: 'JOIN',
+                    roomId: roomId
+                };
+                stompClient.send("/app/chat/message", {}, JSON.stringify(joinMessage));
+            }
+        }
+    }
+
+    function onError(error) {
+        console.error('Could not connect to WebSocket server. Please refresh this page to try again!');
+    }
+
+    function sendMessage() {
+        const messageInput = document.getElementById('message');
+        const messageContent = messageInput.value.trim();
+
+        if (messageContent && stompClient) {
+            const chatMessage = {
+                sender: document.getElementById('username').value.trim(),
+                content: messageContent,
+                type: 'CHAT',
+                roomId: roomId
+            };
+            stompClient.send("/app/chat/message", {}, JSON.stringify(chatMessage));
+            messageInput.value = '';
+        }
+    }
+
+    function onMessageReceived(payload) {
+        const message = JSON.parse(payload.body);
+        const messageElement = document.createElement('div');
+
+        messageElement.textContent = message.message;
+        document.getElementById('chatMessages').appendChild(messageElement);
+    }
+
+    document.addEventListener('DOMContentLoaded', (event) => {
+        document.getElementById('username').addEventListener('blur', connect);
+        document.getElementById('roomId').addEventListener('blur', connect);
+    });
+</script>
+
+</body>
+</html>
