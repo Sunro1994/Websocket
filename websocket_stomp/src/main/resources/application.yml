@@ -4,9 +4,12 @@ spring:
       enabled: true
     restart:
       enabled: false
-  freemarker:
-    cache: false
 
   mvc:
     view:
       suffix: .ftl
+
+  freemarker:
+    cache: false
+    template-loader-path: classpath:/templates
+    suffix: .ftl

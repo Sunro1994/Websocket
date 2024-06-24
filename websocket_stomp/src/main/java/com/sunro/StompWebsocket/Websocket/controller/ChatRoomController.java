@@ -18,7 +18,7 @@ public class ChatRoomController {
 
     @GetMapping("/room")
     public String rooms(Model model) {
-        return "room";
+        return "/chat/room";
     }
 
     @GetMapping("/rooms")
@@ -36,7 +36,7 @@ public class ChatRoomController {
     @GetMapping("/room/enter/{roomId}")
     public String roomDetail(Model model, @PathVariable String roomId) {
         model.addAttribute("roomId", roomId);
-        return "roomDetail"; // 수정: 명확한 뷰 이름 사용
+        return "/chat/roomDetail"; // 수정: 명확한 뷰 이름 사용
     }
 
     @GetMapping("/room/{roomId}")
